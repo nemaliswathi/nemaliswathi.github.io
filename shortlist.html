@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Shortlisted Names</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    #alphabetList {
+      list-style: none;
+      display: flex;
+      gap: 10px;
+    }
+
+    #alphabetList a {
+      text-decoration: none;
+      color: blue;
+      cursor: pointer;
+    }
+
+    #mainlistButton {
+      margin-right: 24px;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: -41px;
+      float: right;
+    }
+
+    #shortlistedContainer {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .shortlistedCard {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+      color: red;
+      font-size: larger;
+    }
+  </style>
+</head>
+<body>
+  <ul id="alphabetList">
+    <!-- Links for each letter -->
+  </ul>
+
+  <button id="mainlistButton" onclick="navigateToMainList()">All names</button>
+
+
+  <h2>Shortlisted Names</h2>
+  <div id="shortlistedContainer">
+    <!-- Shortlisted names will be dynamically added here -->
+  </div>
+
+  <script>
+    // Function to get shortlisted names from local storage
+    function getShortlistedNames() {
+      return JSON.parse(localStorage.getItem('shortlistedNames')) || [];
+    }
+
+    // Function to navigate to the shortlist page
+    function navigateToMainList() {
+      window.location.href = 'index.html';
+    }
+
+
+    // Fetch names from names.json
+    fetch('names.json')
+      .then(response => response.json())
+      .then(data => {
+        const alphabetList = document.getElementById('alphabetList');
+        const shortlistedContainer = document.getElementById('shortlistedContainer');
+
+        // Get shortlisted names from local storage
+        const shortlistedNames = getShortlistedNames();
+
+        // Create links for each letter
+        for (let letter of Array(26).fill().map((_, i) => String.fromCharCode(65 + i))) {
+          const letterLink = document.createElement('a');
+          letterLink.href = `#${letter}`;
+          letterLink.textContent = letter;
+          letterLink.addEventListener('click', function() {
+            showShortlistedNamesStartingWith(letter);
+          });
+          alphabetList.appendChild(letterLink);
+        }
+
+        // Function to show shortlisted names starting with a specific letter
+        function showShortlistedNamesStartingWith(letter) {
+          // Clear the existing shortlisted names in the container
+          shortlistedContainer.innerHTML = '';
+
+          // Filter and display shortlisted names starting with the selected letter
+          shortlistedNames.filter(name => name.toLowerCase().startsWith(letter.toLowerCase())).forEach(name => {
+            const shortlistedCard = document.createElement('div');
+            shortlistedCard.classList.add('shortlistedCard');
+            shortlistedCard.textContent = name;
+            shortlistedContainer.appendChild(shortlistedCard);
+          });
+        }
+
+        // Initially, show shortlisted names starting with the first letter
+        showShortlistedNamesStartingWith('a');
+      })
+      .catch(error => console.error('Error fetching names:', error));
+  </script>
+</body>
+</html>

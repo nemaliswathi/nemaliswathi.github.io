@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Shortlist Names</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    #alphabetList {
+      list-style: none;
+      display: flex;
+      gap: 10px;
+    }
+
+    #alphabetList a {
+      text-decoration: none;
+      color: blue;
+      cursor: pointer;
+    }
+
+    #searchInput {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+
+    #shortlistButton {
+      margin-right: 10px;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      float: right;
+      margin-top: -41px;
+    }
+
+    #nameContainer {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .nameCard {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+      color: #9b9797;
+    }
+
+    .likeButton {
+      margin-top: 10px;
+      cursor: pointer;
+      background-color: #ffffff;
+      border: none;
+    }
+
+    .shortlisted {
+      color: red;
+      font-size: larger;
+    }
+
+    #searchBar {
+      margin-top: 20px;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <ul id="alphabetList">
+    <!-- Links for each letter -->
+  </ul>
+
+  <button id="shortlistButton" onclick="navigateToShortlist()">Shortlist Page</button>
+
+  <div id="searchBar">
+    <input type="text" id="searchInput" oninput="searchNames()" placeholder="Search for names">
+  </div>
+
+  <div id="nameContainer">
+    <!-- Names will be dynamically added here -->
+  </div>
+
+  <script>
+    // Function to get or initialize shortlisted names from local storage
+    function getShortlistedNames() {
+      return JSON.parse(localStorage.getItem('shortlistedNames')) || [];
+    }
+
+    // Function to save shortlisted names to local storage
+    function saveShortlistedNames(shortlistedNames) {
+      localStorage.setItem('shortlistedNames', JSON.stringify(shortlistedNames));
+    }
+
+    // Function to render names based on shortlisted status
+    function renderNames() {
+      const shortlistedNames = getShortlistedNames();
+      const nameCards = document.querySelectorAll('.nameCard');
+
+      nameCards.forEach(nameCard => {
+        const name = nameCard.getAttribute('data-name');
+        const likeButton = nameCard.querySelector('.likeButton');
+
+        if (shortlistedNames.includes(name)) {
+          nameCard.classList.add('shortlisted');
+        } else {
+          nameCard.classList.remove('shortlisted');
+        }
+
+        likeButton.onclick = function() {
+          toggleShortlist(name);
+        };
+      });
+    }
+
+    // Function to toggle shortlist status
+    function toggleShortlist(name) {
+      const shortlistedNames = getShortlistedNames();
+
+      if (shortlistedNames.includes(name)) {
+        // If already shortlisted, remove from the list
+        const index = shortlistedNames.indexOf(name);
+        shortlistedNames.splice(index, 1);
+      } else {
+        // If not shortlisted, add to the list
+        shortlistedNames.push(name);
+      }
+
+      saveShortlistedNames(shortlistedNames);
+      renderNames();
+    }
+
+    // Function to navigate to the shortlist page
+    function navigateToShortlist() {
+      window.location.href = 'shortlist.html';
+    }
+
+    // Function to search for names
+    function searchNames() {
+      const searchInput = document.getElementById('searchInput');
+      const filter = searchInput.value.toLowerCase();
+
+      const nameCards = document.querySelectorAll('.nameCard');
+      nameCards.forEach(nameCard => {
+        const name = nameCard.getAttribute('data-name');
+        const isVisible = name.toLowerCase().includes(filter);
+
+        nameCard.style.display = isVisible ? 'block' : 'none';
+      });
+    }
+
+    // Fetch names from names.json
+    fetch('names.json')
+      .then(response => response.json())
+      .then(data => {
+        const alphabetList = document.getElementById('alphabetList');
+        const nameContainer = document.getElementById('nameContainer');
+
+        // Create links for each letter
+        for (let letter of Array(26).fill().map((_, i) => String.fromCharCode(65 + i))) {
+          const letterLink = document.createElement('a');
+          letterLink.href = `#${letter}`;
+          letterLink.textContent = letter;
+          letterLink.addEventListener('click', function() {
+            showNamesStartingWith(letter);
+          });
+          alphabetList.appendChild(letterLink);
+        }
+
+        // Initially, show names starting with the first letter
+        showNamesStartingWith('a');
+
+        // Function to show names starting with a specific letter
+        function showNamesStartingWith(letter) {
+          // Clear the existing names in the container
+          nameContainer.innerHTML = '';
+
+          // Filter and display names starting with the selected letter
+          data.filter(name => name.toLowerCase().startsWith(letter.toLowerCase())).forEach(name => {
+            const nameCard = document.createElement('div');
+            nameCard.classList.add('nameCard');
+            nameCard.setAttribute('data-name', name);
+
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = name;
+
+            const likeButton = document.createElement('button');
+            likeButton.classList.add('likeButton');
+            likeButton.innerHTML = '<i class="fas fa-heart"></i>'; // Font Awesome heart icon
+
+            nameCard.appendChild(nameSpan);
+            nameCard.appendChild(likeButton);
+            nameContainer.appendChild(nameCard);
+          });
+
+          renderNames(); // Render names with shortlist status
+        }
+      })
+      .catch(error => console.error('Error fetching names:', error));
+  </script>
+</body>
+</html>
